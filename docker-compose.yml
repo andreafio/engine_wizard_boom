@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  # Redis for session storage
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Postgres (optional, for persistent storage)
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: wizard
+      POSTGRES_PASSWORD: wizard_pass
+      POSTGRES_DB: wizard
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wizard"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Wizard Engine API
+  wizard_engine:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=dev
+      - PORT=8000
+      - LOG_LEVEL=INFO
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql+asyncpg://wizard:wizard_pass@postgres:5432/wizard
+      - LLM_PROVIDER=openai
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=gpt-4o-mini
+      - TENANT_KEYS_JSON={"boom":"API_KEY_123"}
+      - HMAC_SECRET=change_me_in_production
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+  postgres_data:

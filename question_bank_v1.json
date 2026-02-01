@@ -1,0 +1,918 @@
+[
+  {
+    "id": "ctx_company_name",
+    "section": "Context",
+    "field": "context.company_name",
+    "ui": {
+      "type": "short_text",
+      "label": "Nome azienda",
+      "field": "context.company_name",
+      "options": [],
+      "constraints": { "max_chars": 80 }
+    },
+    "layer": "core",
+    "depends_on": [],
+    "info_gain": 0.55,
+    "effort": 0.25,
+    "can_be_inferred": false,
+    "ask_if_confidence_below": 0.85
+  },
+  {
+    "id": "ctx_website",
+    "section": "Context",
+    "field": "context.website_url",
+    "ui": {
+      "type": "short_text",
+      "label": "Sito web (URL)",
+      "field": "context.website_url",
+      "options": [],
+      "constraints": { "max_chars": 140 }
+    },
+    "layer": "core",
+    "depends_on": [],
+    "info_gain": 0.65,
+    "effort": 0.25,
+    "can_be_inferred": false,
+    "ask_if_confidence_below": 0.85
+  },
+  {
+    "id": "ctx_industry",
+    "section": "Context",
+    "field": "context.industry",
+    "ui": {
+      "type": "single_select",
+      "label": "Settore principale",
+      "field": "context.industry",
+      "options": [
+        { "id": "saas", "label": "SaaS" },
+        { "id": "ecommerce", "label": "E-commerce" },
+        { "id": "services", "label": "Servizi" },
+        { "id": "industrial", "label": "Industriale" },
+        { "id": "local", "label": "Local business" },
+        { "id": "other", "label": "Altro" }
+      ],
+      "constraints": {}
+    },
+    "layer": "core",
+    "depends_on": [],
+    "info_gain": 0.9,
+    "effort": 0.2,
+    "can_be_inferred": true,
+    "ask_if_confidence_below": 0.8
+  },
+  {
+    "id": "ctx_business_model",
+    "section": "Context",
+    "field": "context.business_model",
+    "ui": {
+      "type": "single_select",
+      "label": "Modello di business",
+      "field": "context.business_model",
+      "options": [
+        { "id": "b2b", "label": "B2B" },
+        { "id": "b2c", "label": "B2C" },
+        { "id": "b2b2c", "label": "B2B2C" },
+        { "id": "mixed", "label": "Misto" }
+      ],
+      "constraints": {}
+    },
+    "layer": "core",
+    "depends_on": [],
+    "info_gain": 0.9,
+    "effort": 0.2,
+    "can_be_inferred": true,
+    "ask_if_confidence_below": 0.8
+  },
+  {
+    "id": "ctx_company_size",
+    "section": "Context",
+    "field": "context.company_size",
+    "ui": {
+      "type": "single_select",
+      "label": "Dimensione azienda",
+      "field": "context.company_size",
+      "options": [
+        { "id": "solo", "label": "Solo / Freelancer" },
+        { "id": "micro", "label": "1–5 persone" },
+        { "id": "sme", "label": "6–50 persone" },
+        { "id": "scaleup", "label": "51–200 persone" },
+        { "id": "enterprise", "label": "200+ persone" }
+      ],
+      "constraints": {}
+    },
+    "layer": "core",
+    "depends_on": [],
+    "info_gain": 0.7,
+    "effort": 0.2,
+    "can_be_inferred": false,
+    "ask_if_confidence_below": 0.8
+  },
+  {
+    "id": "ctx_geo_scope",
+    "section": "Context",
+    "field": "context.geo_scope",
+    "ui": {
+      "type": "single_select",
+      "label": "Mercato geografico",
+      "field": "context.geo_scope",
+      "options": [
+        { "id": "local", "label": "Locale" },
+        { "id": "national", "label": "Nazionale" },
+        { "id": "international", "label": "Internazionale" }
+      ],
+      "constraints": {}
+    },
+    "layer": "core",
+    "depends_on": [],
+    "info_gain": 0.6,
+    "effort": 0.2,
+    "can_be_inferred": true,
+    "ask_if_confidence_below": 0.75
+  },
+  {
+    "id": "ctx_marketing_maturity",
+    "section": "Context",
+    "field": "context.marketing_maturity",
+    "ui": {
+      "type": "single_select",
+      "label": "Maturità marketing attuale",
+      "field": "context.marketing_maturity",
+      "options": [
+        { "id": "start", "label": "Inizio (quasi zero)" },
+        { "id": "basic", "label": "Base (attività sporadiche)" },
+        { "id": "structured", "label": "Strutturata (processi e tracking)" },
+        { "id": "advanced", "label": "Avanzata (ottimizzazione continua)" }
+      ],
+      "constraints": {}
+    },
+    "layer": "deep",
+    "depends_on": [],
+    "info_gain": 0.55,
+    "effort": 0.25,
+    "can_be_inferred": true,
+    "ask_if_confidence_below": 0.65
+  },
+
+  {
+    "id": "obj_primary_goal",
+    "section": "Objective",
+    "field": "objective.primary_goal",
+    "ui": {
+      "type": "single_select",
+      "label": "Obiettivo principale",
+      "field": "objective.primary_goal",
+      "options": [
+        { "id": "leads", "label": "Lead qualificati" },
+        { "id": "sales", "label": "Vendite" },
+        { "id": "bookings", "label": "Appuntamenti / Call" },
+        { "id": "awareness", "label": "Awareness / Posizionamento" },
+        { "id": "retention", "label": "Retention / Upsell" },
+        { "id": "launch", "label": "Lancio" }
+      ],
+      "constraints": {}
+    },
+    "layer": "core",
+    "depends_on": ["context.business_model"],
+    "info_gain": 1.0,
+    "effort": 0.2,
+    "can_be_inferred": false,
+    "ask_if_confidence_below": 0.85
+  },
+  {
+    "id": "obj_secondary_goals",
+    "section": "Objective",
+    "field": "objective.secondary_goals",
+    "ui": {
+      "type": "multi_select",
+      "label": "Obiettivi secondari (opzionale)",
+      "field": "objective.secondary_goals",
+      "options": [
+        { "id": "lead_quality", "label": "Qualità lead" },
+        { "id": "lower_cpl", "label": "Ridurre CPL" },
+        { "id": "pipeline_speed", "label": "Velocizzare pipeline" },
+        { "id": "brand_trust", "label": "Brand trust" },
+        { "id": "conversion_rate", "label": "Aumentare conversione" }
+      ],
+      "constraints": { "min": 0, "max": 3 }
+    },
+    "layer": "deep",
+    "depends_on": ["objective.primary_goal"],
+    "info_gain": 0.45,
+    "effort": 0.25,
+    "can_be_inferred": false,
+    "ask_if_confidence_below": 0.6
+  },
+  {
+    "id": "obj_success_definition",
+    "section": "Objective",
+    "field": "objective.success_definition",
+    "ui": {
+      "type": "short_text",
+      "label": "Come definisci il successo? (anche vago)",
+      "field": "objective.success_definition",
+      "options": [],
+      "constraints": { "max_chars": 140 }
+    },
+    "layer": "core",
+    "depends_on": ["objective.primary_goal"],
+    "info_gain": 0.85,
+    "effort": 0.35,
+    "can_be_inferred": false,
+    "ask_if_confidence_below": 0.8
+  },
+  {
+    "id": "obj_time_horizon",
+    "section": "Objective",
+    "field": "objective.time_horizon",
+    "ui": {
+      "type": "single_select",
+      "label": "Orizzonte temporale per l'obiettivo",
+      "field": "objective.time_horizon",
+      "options": [
+        { "id": "0_4w", "label": "0–4 settimane" },
+        { "id": "1_3m", "label": "1–3 mesi" },
+        { "id": "3_6m", "label": "3–6 mesi" },
+        { "id": "6m_plus", "label": "6+ mesi" }
+      ],
+      "constraints": {}
+    },
+    "layer": "deep",
+    "depends_on": ["objective.primary_goal"],
+    "info_gain": 0.55,
+    "effort": 0.2,
+    "can_be_inferred": false,
+    "ask_if_confidence_below": 0.65
+  },
+
+  {
+    "id": "offer_type",
+    "section": "Offer",
+    "field": "offer.type",
+    "ui": {
+      "type": "single_select",
+      "label": "Cosa vendi principalmente?",
+      "field": "offer.type",
+      "options": [
+        { "id": "product", "label": "Prodotto" },
+        { "id": "service", "label": "Servizio" },
+        { "id": "subscription", "label": "Abbonamento" },
+        { "id": "mixed", "label": "Misto" }
+      ],
+      "constraints": {}
+    },
+    "layer": "core",
+    "depends_on": ["context.industry"],
+    "info_gain": 0.9,
+    "effort": 0.2,
+    "can_be_inferred": true,
+    "ask_if_confidence_below": 0.8
+  },
+  {
+    "id": "offer_one_liner",
+    "section": "Offer",
+    "field": "offer.one_liner",
+    "ui": {
+      "type": "short_text",
+      "label": "Descrivi l'offerta in 1 frase",
+      "field": "offer.one_liner",
+      "options": [],
+      "constraints": { "max_chars": 140 }
+    },
+    "layer": "core",
+    "depends_on": ["offer.type"],
+    "info_gain": 0.85,
+    "effort": 0.35,
+    "can_be_inferred": true,
+    "ask_if_confidence_below": 0.8
+  },
+  {
+    "id": "offer_ticket_range",
+    "section": "Offer",
+    "field": "offer.ticket_range",
+    "ui": {
+      "type": "single_select",
+      "label": "Ticket medio (range)",
+      "field": "offer.ticket_range",
+      "options": [
+        { "id": "lt_1k", "label": "< 1k" },
+        { "id": "1k_5k", "label": "1k–5k" },
+        { "id": "5k_15k", "label": "5k–15k" },
+        { "id": "15k_plus", "label": "15k+" }
+      ],
+      "constraints": {}
+    },
+    "layer": "core",
+    "depends_on": ["offer.type"],
+    "info_gain": 0.7,
+    "effort": 0.25,
+    "can_be_inferred": false,
+    "ask_if_confidence_below": 0.8
+  },
+  {
+    "id": "offer_sales_cycle",
+    "section": "Offer",
+    "field": "offer.sales_cycle",
+    "ui": {
+      "type": "single_select",
+      "label": "Ciclo di vendita tipico",
+      "field": "offer.sales_cycle",
+      "options": [
+        { "id": "instant", "label": "Immediato" },
+        { "id": "short", "label": "1–2 settimane" },
+        { "id": "mid", "label": "2–8 settimane" },
+        { "id": "long", "label": "2+ mesi" }
+      ],
+      "constraints": {}
+    },
+    "layer": "deep",
+    "depends_on": ["offer.ticket_range"],
+    "info_gain": 0.55,
+    "effort": 0.2,
+    "can_be_inferred": true,
+    "ask_if_confidence_below": 0.65
+  },
+  {
+    "id": "offer_differentiator",
+    "section": "Offer",
+    "field": "offer.differentiator",
+    "ui": {
+      "type": "long_text",
+      "label": "Differenziante principale (2–4 frasi)",
+      "field": "offer.differentiator",
+      "options": [],
+      "constraints": { "max_chars": 400 }
+    },
+    "layer": "deep",
+    "depends_on": ["offer.one_liner"],
+    "info_gain": 0.75,
+    "effort": 0.55,
+    "can_be_inferred": true,
+    "ask_if_confidence_below": 0.6
+  },
+
+  {
+    "id": "aud_target_role",
+    "section": "Audience",
+    "field": "audience.target_role",
+    "ui": {
+      "type": "single_select",
+      "label": "Target principale",
+      "field": "audience.target_role",
+      "options": [
+        { "id": "ceo_owner", "label": "CEO / Titolare" },
+        { "id": "marketing", "label": "Marketing" },
+        { "id": "sales", "label": "Sales" },
+        { "id": "ops", "label": "Operations" },
+        { "id": "hr", "label": "HR" },
+        { "id": "consumer", "label": "Consumer finale" }
+      ],
+      "constraints": {}
+    },
+    "layer": "core",
+    "depends_on": ["context.business_model"],
+    "info_gain": 1.0,
+    "effort": 0.2,
+    "can_be_inferred": true,
+    "ask_if_confidence_below": 0.85
+  },
+  {
+    "id": "aud_main_pain",
+    "section": "Audience",
+    "field": "audience.main_pain",
+    "ui": {
+      "type": "short_text",
+      "label": "Problema #1 del target (1 frase)",
+      "field": "audience.main_pain",
+      "options": [],
+      "constraints": { "max_chars": 140 }
+    },
+    "layer": "core",
+    "depends_on": ["audience.target_role"],
+    "info_gain": 0.95,
+    "effort": 0.4,
+    "can_be_inferred": true,
+    "ask_if_confidence_below": 0.8
+  },
+  {
+    "id": "aud_trigger",
+    "section": "Audience",
+    "field": "audience.trigger",
+    "ui": {
+      "type": "short_text",
+      "label": "Cosa li spinge ad agire proprio ora?",
+      "field": "audience.trigger",
+      "options": [],
+      "constraints": { "max_chars": 140 }
+    },
+    "layer": "deep",
+    "depends_on": ["audience.main_pain"],
+    "info_gain": 0.6,
+    "effort": 0.35,
+    "can_be_inferred": true,
+    "ask_if_confidence_below": 0.65
+  },
+  {
+    "id": "aud_main_objection",
+    "section": "Audience",
+    "field": "audience.main_objection",
+    "ui": {
+      "type": "short_text",
+      "label": "Obiezione più comune (1 frase)",
+      "field": "audience.main_objection",
+      "options": [],
+      "constraints": { "max_chars": 140 }
+    },
+    "layer": "deep",
+    "depends_on": ["audience.target_role"],
+    "info_gain": 0.6,
+    "effort": 0.35,
+    "can_be_inferred": true,
+    "ask_if_confidence_below": 0.65
+  },
+  {
+    "id": "aud_decision_process",
+    "section": "Audience",
+    "field": "audience.decision_process",
+    "ui": {
+      "type": "single_select",
+      "label": "Come decidono di acquistare?",
+      "field": "audience.decision_process",
+      "options": [
+        { "id": "single", "label": "Decide una persona" },
+        { "id": "small_group", "label": "Piccolo gruppo (2–3)" },
+        { "id": "committee", "label": "Comitato / più stakeholder" },
+        { "id": "unknown", "label": "Non chiaro" }
+      ],
+      "constraints": {}
+    },
+    "layer": "deep",
+    "depends_on": ["audience.target_role"],
+    "info_gain": 0.55,
+    "effort": 0.2,
+    "can_be_inferred": true,
+    "ask_if_confidence_below": 0.65
+  },
+
+  {
+    "id": "funnel_primary_cta",
+    "section": "Funnel",
+    "field": "funnel.primary_cta",
+    "ui": {
+      "type": "single_select",
+      "label": "CTA principale desiderata",
+      "field": "funnel.primary_cta",
+      "options": [
+        { "id": "demo", "label": "Prenota demo" },
+        { "id": "contact", "label": "Contattaci" },
+        { "id": "audit", "label": "Richiedi audit" },
+        { "id": "quote", "label": "Preventivo" },
+        { "id": "purchase", "label": "Acquista" }
+      ],
+      "constraints": {}
+    },
+    "layer": "core",
+    "depends_on": ["objective.primary_goal", "offer.type"],
+    "info_gain": 0.75,
+    "effort": 0.25,
+    "can_be_inferred": true,
+    "ask_if_confidence_below": 0.75
+  },
+  {
+    "id": "funnel_lead_magnet",
+    "section": "Funnel",
+    "field": "funnel.lead_magnet",
+    "ui": {
+      "type": "single_select",
+      "label": "Lead magnet / incentivo",
+      "field": "funnel.lead_magnet",
+      "options": [
+        { "id": "none", "label": "Nessuno (diretto)" },
+        { "id": "content", "label": "Contenuto (guida/checklist)" },
+        { "id": "webinar", "label": "Webinar" },
+        { "id": "case_study", "label": "Case study" },
+        { "id": "trial", "label": "Trial" }
+      ],
+      "constraints": {}
+    },
+    "layer": "deep",
+    "depends_on": ["funnel.primary_cta"],
+    "info_gain": 0.5,
+    "effort": 0.25,
+    "can_be_inferred": true,
+    "ask_if_confidence_below": 0.6
+  },
+  {
+    "id": "funnel_conversion_path",
+    "section": "Funnel",
+    "field": "funnel.conversion_path",
+    "ui": {
+      "type": "single_select",
+      "label": "Percorso di conversione",
+      "field": "funnel.conversion_path",
+      "options": [
+        { "id": "direct", "label": "Traffico → CTA diretta" },
+        { "id": "landing", "label": "Traffico → Landing → CTA" },
+        { "id": "nurture", "label": "Traffico → Lead magnet → Nurturing → CTA" },
+        { "id": "sales_first", "label": "Traffico → Call discovery → proposta" }
+      ],
+      "constraints": {}
+    },
+    "layer": "core",
+    "depends_on": ["funnel.primary_cta"],
+    "info_gain": 0.7,
+    "effort": 0.2,
+    "can_be_inferred": true,
+    "ask_if_confidence_below": 0.75
+  },
+  {
+    "id": "funnel_sales_handoff",
+    "section": "Funnel",
+    "field": "funnel.sales_handoff",
+    "ui": {
+      "type": "single_select",
+      "label": "Passaggio a sales",
+      "field": "funnel.sales_handoff",
+      "options": [
+        { "id": "manual", "label": "Manuale (mail/telefono)" },
+        { "id": "crm", "label": "CRM (gestito)" },
+        { "id": "automation", "label": "Automatizzato (routing/SLAs)" },
+        { "id": "unknown", "label": "Non definito" }
+      ],
+      "constraints": {}
+    },
+    "layer": "deep",
+    "depends_on": ["funnel.conversion_path"],
+    "info_gain": 0.5,
+    "effort": 0.2,
+    "can_be_inferred": false,
+    "ask_if_confidence_below": 0.6
+  },
+
+  {
+    "id": "channels_current",
+    "section": "Channels",
+    "field": "channels.current",
+    "ui": {
+      "type": "multi_select",
+      "label": "Canali usati oggi (seleziona)",
+      "field": "channels.current",
+      "options": [
+        { "id": "seo", "label": "SEO" },
+        { "id": "content", "label": "Content" },
+        { "id": "google_ads", "label": "Google Ads" },
+        { "id": "meta_ads", "label": "Meta Ads" },
+        { "id": "linkedin_ads", "label": "LinkedIn Ads" },
+        { "id": "email", "label": "Email / Automation" },
+        { "id": "outbound", "label": "Outbound" },
+        { "id": "partners", "label": "Partner" }
+      ],
+      "constraints": { "min": 0, "max": 6 }
+    },
+    "layer": "core",
+    "depends_on": ["objective.primary_goal"],
+    "info_gain": 0.75,
+    "effort": 0.25,
+    "can_be_inferred": true,
+    "ask_if_confidence_below": 0.75
+  },
+  {
+    "id": "channels_recommended",
+    "section": "Channels",
+    "field": "channels.recommended",
+    "ui": {
+      "type": "multi_select",
+      "label": "Canali consigliati (scegli 1–4)",
+      "field": "channels.recommended",
+      "options": [
+        { "id": "seo", "label": "SEO" },
+        { "id": "content", "label": "Content" },
+        { "id": "google_ads", "label": "Google Ads" },
+        { "id": "meta_ads", "label": "Meta Ads" },
+        { "id": "linkedin_ads", "label": "LinkedIn Ads" },
+        { "id": "email", "label": "Email / Automation" },
+        { "id": "outbound", "label": "Outbound" },
+        { "id": "partners", "label": "Partner" }
+      ],
+      "constraints": { "min": 1, "max": 4 }
+    },
+    "layer": "core",
+    "depends_on": ["channels.current", "objective.primary_goal"],
+    "info_gain": 0.8,
+    "effort": 0.3,
+    "can_be_inferred": true,
+    "ask_if_confidence_below": 0.75
+  },
+  {
+    "id": "channels_priority",
+    "section": "Channels",
+    "field": "channels.priority",
+    "ui": {
+      "type": "single_select",
+      "label": "Priorità strategica",
+      "field": "channels.priority",
+      "options": [
+        { "id": "performance", "label": "Performance (lead/vendite)" },
+        { "id": "awareness", "label": "Awareness (posizionamento)" },
+        { "id": "mixed", "label": "Mix bilanciato" }
+      ],
+      "constraints": {}
+    },
+    "layer": "deep",
+    "depends_on": ["channels.recommended"],
+    "info_gain": 0.5,
+    "effort": 0.2,
+    "can_be_inferred": true,
+    "ask_if_confidence_below": 0.6
+  },
+  {
+    "id": "channels_notes",
+    "section": "Channels",
+    "field": "channels.notes",
+    "ui": {
+      "type": "short_text",
+      "label": "Nota canali (opzionale): cosa ha funzionato/non ha funzionato?",
+      "field": "channels.notes",
+      "options": [],
+      "constraints": { "max_chars": 140 }
+    },
+    "layer": "deep",
+    "depends_on": ["channels.current"],
+    "info_gain": 0.45,
+    "effort": 0.35,
+    "can_be_inferred": false,
+    "ask_if_confidence_below": 0.55
+  },
+
+  {
+    "id": "assets_has_landing",
+    "section": "AssetsTracking",
+    "field": "assets_tracking.has_landing",
+    "ui": {
+      "type": "single_select",
+      "label": "Avete landing dedicate?",
+      "field": "assets_tracking.has_landing",
+      "options": [
+        { "id": "yes", "label": "Sì" },
+        { "id": "some", "label": "Qualcuna" },
+        { "id": "no", "label": "No" }
+      ],
+      "constraints": {}
+    },
+    "layer": "core",
+    "depends_on": ["funnel.conversion_path"],
+    "info_gain": 0.55,
+    "effort": 0.2,
+    "can_be_inferred": true,
+    "ask_if_confidence_below": 0.75
+  },
+  {
+    "id": "assets_ready_creatives",
+    "section": "AssetsTracking",
+    "field": "assets_tracking.assets_ready",
+    "ui": {
+      "type": "single_select",
+      "label": "Asset pronti (creatività/copy)?",
+      "field": "assets_tracking.assets_ready",
+      "options": [
+        { "id": "yes", "label": "Sì, pronti" },
+        { "id": "partial", "label": "Parzialmente" },
+        { "id": "no", "label": "No, da creare" }
+      ],
+      "constraints": {}
+    },
+    "layer": "core",
+    "depends_on": ["channels.recommended"],
+    "info_gain": 0.6,
+    "effort": 0.2,
+    "can_be_inferred": false,
+    "ask_if_confidence_below": 0.75
+  },
+  {
+    "id": "assets_tracking_stack",
+    "section": "AssetsTracking",
+    "field": "assets_tracking.tracking_stack",
+    "ui": {
+      "type": "multi_select",
+      "label": "Tracking attivo (seleziona)",
+      "field": "assets_tracking.tracking_stack",
+      "options": [
+        { "id": "ga4", "label": "GA4" },
+        { "id": "gtm", "label": "GTM" },
+        { "id": "meta_pixel", "label": "Meta Pixel" },
+        { "id": "google_ads_tag", "label": "Google Ads Tag" },
+        { "id": "server_side", "label": "Server-side" },
+        { "id": "none", "label": "Nessuno / non so" }
+      ],
+      "constraints": { "min": 0, "max": 4 }
+    },
+    "layer": "core",
+    "depends_on": ["channels.current"],
+    "info_gain": 0.7,
+    "effort": 0.25,
+    "can_be_inferred": true,
+    "ask_if_confidence_below": 0.75
+  },
+  {
+    "id": "assets_crm",
+    "section": "AssetsTracking",
+    "field": "assets_tracking.crm",
+    "ui": {
+      "type": "single_select",
+      "label": "CRM in uso",
+      "field": "assets_tracking.crm",
+      "options": [
+        { "id": "hubspot", "label": "HubSpot" },
+        { "id": "salesforce", "label": "Salesforce" },
+        { "id": "pipedrive", "label": "Pipedrive" },
+        { "id": "zoho", "label": "Zoho" },
+        { "id": "other", "label": "Altro" },
+        { "id": "none", "label": "Nessuno" }
+      ],
+      "constraints": {}
+    },
+    "layer": "deep",
+    "depends_on": ["funnel.sales_handoff"],
+    "info_gain": 0.55,
+    "effort": 0.2,
+    "can_be_inferred": false,
+    "ask_if_confidence_below": 0.6
+  },
+  {
+    "id": "assets_analytics_access",
+    "section": "AssetsTracking",
+    "field": "assets_tracking.analytics_access",
+    "ui": {
+      "type": "single_select",
+      "label": "Accesso a dati analytics",
+      "field": "assets_tracking.analytics_access",
+      "options": [
+        { "id": "full", "label": "Sì, accesso completo" },
+        { "id": "partial", "label": "Parziale" },
+        { "id": "none", "label": "No / da ottenere" }
+      ],
+      "constraints": {}
+    },
+    "layer": "deep",
+    "depends_on": ["assets_tracking.tracking_stack"],
+    "info_gain": 0.45,
+    "effort": 0.15,
+    "can_be_inferred": false,
+    "ask_if_confidence_below": 0.6
+  },
+
+  {
+    "id": "constraints_budget_range",
+    "section": "Constraints",
+    "field": "constraints.budget_range",
+    "ui": {
+      "type": "single_select",
+      "label": "Budget disponibile (range)",
+      "field": "constraints.budget_range",
+      "options": [
+        { "id": "lt_1k", "label": "< 1k" },
+        { "id": "1k_5k", "label": "1k–5k" },
+        { "id": "5k_15k", "label": "5k–15k" },
+        { "id": "15k_50k", "label": "15k–50k" },
+        { "id": "gt_50k", "label": "50k+" },
+        { "id": "unknown", "label": "Non definito" }
+      ],
+      "constraints": {}
+    },
+    "layer": "core",
+    "depends_on": ["objective.primary_goal"],
+    "info_gain": 0.85,
+    "effort": 0.25,
+    "can_be_inferred": false,
+    "ask_if_confidence_below": 0.8
+  },
+  {
+    "id": "constraints_timing",
+    "section": "Constraints",
+    "field": "constraints.timing",
+    "ui": {
+      "type": "single_select",
+      "label": "Tempistiche",
+      "field": "constraints.timing",
+      "options": [
+        { "id": "asap", "label": "ASAP (0–4 settimane)" },
+        { "id": "1_3m", "label": "1–3 mesi" },
+        { "id": "3_6m", "label": "3–6 mesi" },
+        { "id": "6m_plus", "label": "6+ mesi" }
+      ],
+      "constraints": {}
+    },
+    "layer": "core",
+    "depends_on": ["objective.primary_goal"],
+    "info_gain": 0.7,
+    "effort": 0.2,
+    "can_be_inferred": false,
+    "ask_if_confidence_below": 0.8
+  },
+  {
+    "id": "constraints_internal_resources",
+    "section": "Constraints",
+    "field": "constraints.internal_resources",
+    "ui": {
+      "type": "single_select",
+      "label": "Risorse interne disponibili",
+      "field": "constraints.internal_resources",
+      "options": [
+        { "id": "none", "label": "Nessuna" },
+        { "id": "small", "label": "1 persona" },
+        { "id": "team", "label": "2–3 persone" },
+        { "id": "dedicated", "label": "Team dedicato" }
+      ],
+      "constraints": {}
+    },
+    "layer": "deep",
+    "depends_on": ["constraints.budget_range"],
+    "info_gain": 0.55,
+    "effort": 0.2,
+    "can_be_inferred": false,
+    "ask_if_confidence_below": 0.6
+  },
+  {
+    "id": "constraints_notes",
+    "section": "Constraints",
+    "field": "constraints.notes",
+    "ui": {
+      "type": "short_text",
+      "label": "Vincoli extra (opzionale)",
+      "field": "constraints.notes",
+      "options": [],
+      "constraints": { "max_chars": 140 }
+    },
+    "layer": "deep",
+    "depends_on": ["constraints.timing"],
+    "info_gain": 0.4,
+    "effort": 0.3,
+    "can_be_inferred": false,
+    "ask_if_confidence_below": 0.55
+  },
+
+  {
+    "id": "risks_main_risk",
+    "section": "Risks",
+    "field": "risks.main_risk",
+    "ui": {
+      "type": "single_select",
+      "label": "Rischio principale",
+      "field": "risks.main_risk",
+      "options": [
+        { "id": "no_tracking", "label": "Tracking insufficiente" },
+        { "id": "weak_offer", "label": "Offerta poco chiara" },
+        { "id": "low_budget", "label": "Budget insufficiente" },
+        { "id": "no_assets", "label": "Asset non pronti" },
+        { "id": "sales_followup", "label": "Follow-up sales debole" },
+        { "id": "unknown", "label": "Altro / non so" }
+      ],
+      "constraints": {}
+    },
+    "layer": "core",
+    "depends_on": ["assets_tracking.tracking_stack", "offer.one_liner"],
+    "info_gain": 0.6,
+    "effort": 0.2,
+    "can_be_inferred": true,
+    "ask_if_confidence_below": 0.75
+  },
+  {
+    "id": "risks_unknowns",
+    "section": "Risks",
+    "field": "risks.unknowns",
+    "ui": {
+      "type": "long_text",
+      "label": "Cosa oggi è 'unknown' e va scoperto? (2–4 frasi)",
+      "field": "risks.unknowns",
+      "options": [],
+      "constraints": { "max_chars": 400 }
+    },
+    "layer": "deep",
+    "depends_on": ["risks.main_risk"],
+    "info_gain": 0.55,
+    "effort": 0.55,
+    "can_be_inferred": false,
+    "ask_if_confidence_below": 0.6
+  },
+
+  {
+    "id": "review_user_confirmation",
+    "section": "Review",
+    "field": "review.user_confirmation",
+    "ui": {
+      "type": "confirmation",
+      "label": "Confermi i dettagli e vuoi generare il profilo interno?",
+      "field": "review.user_confirmation",
+      "options": [
+        { "id": "confirm", "label": "Sì, genera" },
+        { "id": "edit", "label": "No, modifica" }
+      ],
+      "constraints": {}
+    },
+    "layer": "core",
+    "depends_on": ["risks.main_risk"],
+    "info_gain": 1.0,
+    "effort": 0.1,
+    "can_be_inferred": false,
+    "ask_if_confidence_below": 0.95
+  }
+]
