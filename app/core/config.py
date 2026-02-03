@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     
     # Redis
-    redis_url: str = "redis://localhost:6379/0"
+    redis_url: str = "memory://"  # Use in-memory for testing
     
     # Postgres (optional)
     database_url: str | None = None

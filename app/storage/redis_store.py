@@ -15,33 +15,41 @@ class RedisStore:
     def __init__(self):
         """Initialize Redis connection."""
         self.redis: Optional[redis.Redis] = None
+        self.memory_store: Dict[str, str] = {}  # In-memory storage for testing
     
     async def connect(self):
-        """Connect to Redis."""
-        try:
-            self.redis = await redis.from_url(
-                settings.redis_url,
-                encoding="utf-8",
-                decode_responses=True
-            )
-            await self.redis.ping()
-            logger.info("redis_connected", url=settings.redis_url)
-        except Exception as e:
-            logger.error("redis_connection_failed", error=str(e))
-            raise
+        """Connect to Redis or use in-memory storage."""
+        if settings.redis_url == "memory://":
+            # Use in-memory storage for testing
+            self.redis = None
+            logger.info("using_in_memory_storage")
+        else:
+            try:
+                self.redis = await redis.from_url(
+                    settings.redis_url,
+                    encoding="utf-8",
+                    decode_responses=True
+                )
+                await self.redis.ping()
+                logger.info("redis_connected", url=settings.redis_url)
+            except Exception as e:
+                logger.error("redis_connection_failed", error=str(e))
+                raise
     
     async def disconnect(self):
         """Disconnect from Redis."""
         if self.redis:
             await self.redis.close()
             logger.info("redis_disconnected")
+        else:
+            logger.info("memory_storage_disconnected")
     
     def _session_key(self, session_id: str) -> str:
         """Generate Redis key for session."""
         return f"session:{session_id}"
     
     async def save_session(self, session: Session) -> bool:
-        """Save session to Redis.
+        """Save session to Redis or memory.
         
         Args:
             session: Session to save
@@ -52,11 +60,17 @@ class RedisStore:
         try:
             key = self._session_key(session.session_id)
             data = session.model_dump_json()
-            await self.redis.setex(
-                key,
-                settings.session_ttl_seconds,
-                data
-            )
+            
+            if self.redis:
+                await self.redis.setex(
+                    key,
+                    settings.session_ttl_seconds,
+                    data
+                )
+            else:
+                # Use in-memory storage
+                self.memory_store[key] = data
+            
             logger.debug("session_saved", session_id=session.session_id)
             return True
         except Exception as e:
@@ -64,7 +78,7 @@ class RedisStore:
             return False
     
     async def get_session(self, session_id: str) -> Optional[Session]:
-        """Retrieve session from Redis.
+        """Retrieve session from Redis or memory.
         
         Args:
             session_id: Session ID
@@ -74,7 +88,13 @@ class RedisStore:
         """
         try:
             key = self._session_key(session_id)
-            data = await self.redis.get(key)
+            
+            if self.redis:
+                data = await self.redis.get(key)
+            else:
+                # Use in-memory storage
+                data = self.memory_store.get(key)
+            
             if not data:
                 logger.debug("session_not_found", session_id=session_id)
                 return None

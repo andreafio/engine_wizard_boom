@@ -279,6 +279,89 @@ class QualityCriticService:
         return followups.get(section, {}).get(field_name)
 
 
+class SpecificityEvaluation(BaseModel):
+    """Specificity and actionability evaluation result"""
+    specificity_score: float = Field(ge=0.0, le=1.0)
+    should_be_draft: bool
+    reason: str = Field(max_length=50)
+
+
+class SpecificityEvaluator:
+    """
+    Service for evaluating specificity and actionability of answers.
+    """
+
+    def evaluate_specificity(
+        self,
+        section: str,
+        field: str,
+        value: Any,
+        ui_type: str
+    ) -> SpecificityEvaluation:
+        """
+        Evaluate specificity and actionability of an answer.
+
+        Args:
+            section: Section name
+            field: Dot notation field
+            value: Answer value (string or array)
+            ui_type: UI type
+
+        Returns:
+            SpecificityEvaluation
+        """
+        # Handle empty/null values
+        if value is None or value == "" or (isinstance(value, list) and len(value) == 0):
+            return SpecificityEvaluation(
+                specificity_score=0.0,
+                should_be_draft=True,
+                reason="empty value"
+            )
+
+        # Convert to string
+        if isinstance(value, list):
+            value_str = " ".join(str(v) for v in value)
+        else:
+            value_str = str(value)
+
+        text = value_str.strip().lower()
+
+        # Check for generic marketing language
+        generic_phrases = [
+            "grow my business", "increase sales", "build brand awareness",
+            "reach more customers", "improve marketing", "digital marketing",
+            "social media marketing", "content marketing", "marketing strategy",
+            "business development", "customer acquisition", "lead generation",
+            "brand building", "market expansion", "revenue growth"
+        ]
+
+        if any(phrase in text for phrase in generic_phrases):
+            return SpecificityEvaluation(
+                specificity_score=0.2,
+                should_be_draft=True,
+                reason="generic marketing language"
+            )
+
+        # Check for lists or concrete descriptors
+        has_lists = "," in value_str or ";" in value_str or "\n" in value_str
+        has_concrete = any(word in text for word in ["specific", "details", "particular", "$", "€", "%", "by", "within"])
+
+        if has_lists or has_concrete:
+            score = 0.8
+            should_draft = False
+            reason = "lists or concrete descriptors"
+        else:
+            score = 0.4
+            should_draft = True
+            reason = "too generic"
+
+        return SpecificityEvaluation(
+            specificity_score=round(score, 1),
+            should_be_draft=should_draft,
+            reason=reason
+        )
+
+
 # Convenience function
 async def critique_wizard_answer(
     field: str,

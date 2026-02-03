@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wizard Engine Boom - Frontend Integration Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        input, textarea { width: 100%; padding: 8px; margin: 5px 0; }
+        .output { background: #f5f5f5; padding: 10px; border-radius: 4px; white-space: pre-wrap; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Wizard Engine Boom - Frontend Integration Demo</h1>
+        
+        <div class="section">
+            <h2>📋 Instructions</h2>
+            <p><strong>Important:</strong> Open this page via HTTP server to avoid CORS issues:</p>
+            <code>http://localhost:8081/frontend_demo.html</code>
+            <p>Don't open the file directly (file://...) as it will cause CORS errors.</p>
+        </div>
+        
+        <div class="section">
+            <h2>🔗 Server Connection Test</h2>
+            <button onclick="testConnection()">Test Server Connection</button>
+            <div id="connectionTest" class="output"></div>
+        </div>
+
+        <div class="section">
+            <h2>1. Start Wizard Session</h2>
+            <button onclick="startSession()">Start New Session</button>
+            <div id="sessionOutput" class="output"></div>
+        </div>
+
+        <div class="section">
+            <h2>2. Send Wizard Turn</h2>
+            <input type="text" id="sessionId" placeholder="Session ID" readonly>
+            <input type="text" id="eventId" placeholder="Event ID" value="evt_001">
+            <div>
+                <label><input type="radio" name="inputType" value="ui" checked> UI Event</label>
+                <label><input type="radio" name="inputType" value="text"> Text Message</label>
+            </div>
+            <div id="uiEventFields">
+                <input type="text" id="fieldName" placeholder="Field name (e.g., project_name)">
+                <input type="text" id="fieldValue" placeholder="Field value">
+                <select id="eventType">
+                    <option value="text_submitted">Text Submitted</option>
+                    <option value="selected_option">Selected Option</option>
+                </select>
+            </div>
+            <textarea id="userMessage" placeholder="User message" style="display:none;"></textarea>
+            <button onclick="sendTurn()">Send Turn</button>
+            <div id="turnOutput" class="output"></div>
+        </div>
+
+        <div class="section">
+            <h2>3. Generate Output</h2>
+            <input type="text" id="genSessionId" placeholder="Session ID" readonly>
+            <input type="text" id="genEventId" placeholder="Event ID" value="gen_001">
+            <select id="outputFormat">
+                <option value="json">JSON</option>
+                <option value="html">HTML</option>
+            </select>
+            <button onclick="generateOutput()">Generate Output</button>
+            <div id="generateOutput" class="output"></div>
+        </div>
+    </div>
+
+    <!-- Include the integration script -->
+    <script src="frontend_integration.js"></script>
+    <script>
+        let currentSessionId = null;
+
+        async function testConnection() {
+            try {
+                const isConnected = await window.WizardAPI.testServerConnection();
+                if (isConnected) {
+                    document.getElementById('connectionTest').innerHTML = 
+                        '<div class="success">✅ Server is reachable at http://localhost:8002</div>';
+                } else {
+                    document.getElementById('connectionTest').innerHTML = 
+                        '<div class="error">❌ Cannot reach server. Make sure the backend is running on port 8002</div>';
+                }
+            } catch (error) {
+                document.getElementById('connectionTest').innerHTML = 
+                    `<div class="error">❌ Connection test failed: ${error.message}</div>`;
+            }
+        }
+
+        async function startSession() {
+            try {
+                const result = await window.WizardAPI.startWizard(
+                    { source: "demo" },
+                    { analytics: true, marketing: false }
+                );
+
+                currentSessionId = result.session_id;
+                document.getElementById('sessionId').value = currentSessionId;
+                document.getElementById('genSessionId').value = currentSessionId;
+
+                document.getElementById('sessionOutput').innerHTML =
+                    `<div class="success">✅ Session started successfully!</div>\n` +
+                    `Session ID: ${result.session_id}\n\n` +
+                    `Wizard State:\n${JSON.stringify(result.wizard, null, 2)}`;
+
+            } catch (error) {
+                document.getElementById('sessionOutput').innerHTML =
+                    `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function sendTurn() {
+            if (!currentSessionId) {
+                alert('Please start a session first');
+                return;
+            }
+
+            try {
+                const eventId = document.getElementById('eventId').value;
+                const inputType = document.querySelector('input[name="inputType"]:checked').value;
+
+                let uiEvent = null;
+                let userMessage = null;
+
+                if (inputType === 'ui') {
+                    uiEvent = {
+                        type: document.getElementById('eventType').value,
+                        field: document.getElementById('fieldName').value,
+                        value: document.getElementById('fieldValue').value
+                    };
+                } else {
+                    userMessage = document.getElementById('userMessage').value;
+                }
+
+                const result = await window.WizardAPI.sendWizardTurn(
+                    currentSessionId,
+                    eventId,
+                    uiEvent,
+                    userMessage
+                );
+
+                document.getElementById('turnOutput').innerHTML =
+                    `<div class="success">✅ Turn processed successfully!</div>\n` +
+                    `Assistant Message: ${result.assistant_message}\n\n` +
+                    `Wizard State:\n${JSON.stringify(result.wizard, null, 2)}`;
+
+            } catch (error) {
+                document.getElementById('turnOutput').innerHTML =
+                    `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function generateOutput() {
+            if (!currentSessionId) {
+                alert('Please start a session first');
+                return;
+            }
+
+            try {
+                const eventId = document.getElementById('genEventId').value;
+                const format = document.getElementById('outputFormat').value;
+
+                const result = await window.WizardAPI.generateWizardOutput(
+                    currentSessionId,
+                    eventId,
+                    format
+                );
+
+                document.getElementById('generateOutput').innerHTML =
+                    `<div class="success">✅ Output generated successfully!</div>\n` +
+                    `Presentation:\n${JSON.stringify(result.presentation, null, 2)}\n\n` +
+                    `Report:\n${JSON.stringify(result.report, null, 2)}`;
+
+            } catch (error) {
+                document.getElementById('generateOutput').innerHTML =
+                    `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        // Toggle input fields based on input type
+        document.querySelectorAll('input[name="inputType"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const uiFields = document.getElementById('uiEventFields');
+                const textField = document.getElementById('userMessage');
+
+                if (this.value === 'ui') {
+                    uiFields.style.display = 'block';
+                    textField.style.display = 'none';
+                } else {
+                    uiFields.style.display = 'none';
+                    textField.style.display = 'block';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

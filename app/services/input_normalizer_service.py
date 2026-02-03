@@ -295,3 +295,59 @@ class InputNormalizerService:
             return matched_ids, "word_match"
 
         return [], "no_mapping"
+
+    def normalize_text_simple(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Simple text normalization as per system requirements.
+        Normalizes text by trimming, removing filler words, collapsing repetitions, mapping to unknown.
+        
+        Args:
+            input_data: Dict with field, raw_text, language
+            
+        Returns:
+            Dict with normalized_text, is_unknown, notes
+        """
+        try:
+            raw_text = input_data.get("raw_text", "")
+            language = input_data.get("language", "it")
+            
+            # Trim whitespace
+            normalized = raw_text.strip()
+            
+            # Remove filler words (Italian common fillers)
+            filler_words = {"eh", "mah", "dunque", "allora", "quindi", "cioè", "tipo", "come", "insomma"}
+            words = normalized.split()
+            filtered_words = [word for word in words if word.lower() not in filler_words]
+            normalized = " ".join(filtered_words)
+            
+            # Collapse repetitions (e.g., "bene bene" -> "bene")
+            if normalized:
+                words = normalized.split()
+                deduped = []
+                for word in words:
+                    if not deduped or word.lower() != deduped[-1].lower():
+                        deduped.append(word)
+                normalized = " ".join(deduped)
+            
+            # Check for unknown expressions
+            unknown_expressions = {"boh", "non so", "dipende"}
+            if normalized.lower() in unknown_expressions:
+                return {
+                    "normalized_text": "unknown",
+                    "is_unknown": True,
+                    "notes": "mapped_to_unknown"
+                }
+            
+            return {
+                "normalized_text": normalized,
+                "is_unknown": False,
+                "notes": "normalized"
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Simple normalization failed: {e}")
+            return {
+                "normalized_text": input_data.get("raw_text", ""),
+                "is_unknown": False,
+                "notes": f"error: {str(e)}"
+            }
