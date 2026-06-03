@@ -25,6 +25,7 @@ from app.services.blueprint_review_service import BlueprintReviewService
 from app.services.strategic_profile_service import StrategicProfileService
 from app.services.input_normalizer_service import InputNormalizerService
 from app.storage.session_store_adapter import RedisSessionStoreAdapter
+from app.db.lead_repository import save_lead
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/v1/wizard", tags=["wizard"])
@@ -337,6 +338,13 @@ async def generate(
             logger.info("internal_profile_generated", session_id=request.session_id)
         except Exception as e:
             logger.warning("internal_profile_failed", session_id=request.session_id, error=str(e))
+
+    await save_lead(
+        session=session,
+        presentation=output.get("presentation", {}),
+        report=output.get("report", {}),
+        internal_profile=internal_profile,
+    )
 
     return GenerateResponse(
         presentation=output.get("presentation", {}),

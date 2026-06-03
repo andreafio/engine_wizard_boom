@@ -11,6 +11,7 @@ from slowapi.errors import RateLimitExceeded
 from app.core.config import settings
 from app.core.logging import configure_logging, get_logger
 from app.storage.redis_store import redis_store
+from app.db.database import init_db
 from app.api import routes_sessions, routes_wizard
 
 # Configure logging
@@ -30,6 +31,7 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning("redis_startup_failed", error=str(e),
                        message="Falling back to in-memory storage")
+    await init_db()
 
     yield
 
