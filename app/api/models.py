@@ -67,6 +67,7 @@ class GenerateResponse(BaseModel):
     """Response with generated output."""
     presentation: Dict[str, Any]
     report: Dict[str, Any]
+    internal_profile: Optional[Dict[str, Any]] = None  # Strategic profile V2 (consulting-grade)
 
 
 # Error response

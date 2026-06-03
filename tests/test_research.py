@@ -9,13 +9,18 @@ from app.services.research_service import (
     AdCampaign,
     CompetitorInsight
 )
-from app.llm.openai_provider import OpenAIProvider
-
-
 @pytest.fixture
 def research_service():
-    """Create research service with LLM provider"""
-    llm = OpenAIProvider()
+    """Create research service with mocked LLM provider"""
+    from unittest.mock import AsyncMock, MagicMock
+    llm = MagicMock()
+    llm.generate_json = AsyncMock(return_value={
+        "insights": ["Test insight 1", "Test insight 2", "Test insight 3"],
+        "channels": ["linkedin"],
+        "gaps": ["Test gap"],
+        "competitors": [],
+    })
+    llm.generate_text = AsyncMock(return_value="")
     return ResearchService(llm)
 
 
@@ -196,6 +201,7 @@ async def test_generate_insights_fallback(research_service):
     insights = await research_service._generate_insights(
         company_name="Acme Corp",
         industry="B2B SaaS",
+        web_results="",
         social_profiles=[],
         ad_campaigns=[],
         competitors=[]

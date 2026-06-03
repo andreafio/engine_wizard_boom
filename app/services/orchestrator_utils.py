@@ -3,6 +3,7 @@ Orchestrator Service V2 Utilities
 Supporting functions for the advanced orchestrator service
 """
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass
@@ -227,7 +228,7 @@ def apply_answer(
         "ui_type": ui_type,
         "source": source,
         "evidence": evidence,
-        "timestamp": "2026-01-30T13:00:00Z"  # Would be dynamic in production
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
     logger.info("answer_applied", field=field, value=normalized_value, source=source)
@@ -267,7 +268,8 @@ def _is_field_answered(blueprint: Dict[str, Any], field: str) -> bool:
         True if field has a value
     """
     state = get_field_state(blueprint, field)
-    return bool(state.get("value"))
+    # Multi-select fields store answers in normalized_ids (value stays None)
+    return bool(state.get("value")) or bool(state.get("normalized_ids"))
 
 
 def _build_clarifier_context(blueprint: Dict[str, Any]) -> Dict[str, Any]:

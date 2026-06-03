@@ -1,6 +1,6 @@
 """Redis storage for sessions."""
 import json
-from typing import Optional
+from typing import Dict, Optional
 import redis.asyncio as redis
 from app.core.config import settings
 from app.core.logging import get_logger
@@ -36,6 +36,12 @@ class RedisStore:
                 logger.error("redis_connection_failed", error=str(e))
                 raise
     
+    async def ensure_connected(self):
+        """Lazy connect: no-op if already connected or using in-memory mode."""
+        if self.redis is not None or settings.redis_url == "memory://":
+            return
+        await self.connect()
+
     async def disconnect(self):
         """Disconnect from Redis."""
         if self.redis:
@@ -43,7 +49,7 @@ class RedisStore:
             logger.info("redis_disconnected")
         else:
             logger.info("memory_storage_disconnected")
-    
+
     def _session_key(self, session_id: str) -> str:
         """Generate Redis key for session."""
         return f"session:{session_id}"
@@ -57,6 +63,7 @@ class RedisStore:
         Returns:
             True if saved successfully
         """
+        await self.ensure_connected()
         try:
             key = self._session_key(session.session_id)
             data = session.model_dump_json()
@@ -86,13 +93,13 @@ class RedisStore:
         Returns:
             Session object or None if not found
         """
+        await self.ensure_connected()
         try:
             key = self._session_key(session_id)
-            
+
             if self.redis:
                 data = await self.redis.get(key)
             else:
-                # Use in-memory storage
                 data = self.memory_store.get(key)
             
             if not data:
@@ -108,38 +115,74 @@ class RedisStore:
     
     async def delete_session(self, session_id: str) -> bool:
         """Delete session from Redis.
-        
+
         Args:
             session_id: Session ID
-            
+
         Returns:
             True if deleted
         """
+        await self.ensure_connected()
         try:
             key = self._session_key(session_id)
-            await self.redis.delete(key)
+            if self.redis:
+                await self.redis.delete(key)
+            else:
+                self.memory_store.pop(key, None)
             logger.debug("session_deleted", session_id=session_id)
             return True
         except Exception as e:
             logger.error("session_delete_failed", session_id=session_id, error=str(e))
             return False
-    
+
     async def extend_session(self, session_id: str) -> bool:
         """Extend session TTL.
-        
+
         Args:
             session_id: Session ID
-            
+
         Returns:
             True if extended
         """
+        await self.ensure_connected()
         try:
             key = self._session_key(session_id)
-            await self.redis.expire(key, settings.session_ttl_seconds)
+            if self.redis:
+                await self.redis.expire(key, settings.session_ttl_seconds)
+            # In memory-mode TTL is not enforced (acceptable for dev/test)
             return True
         except Exception as e:
             logger.error("session_extend_failed", session_id=session_id, error=str(e))
             return False
+
+
+    def _idempotent_key(self, event_id: str) -> str:
+        """Generate Redis key for idempotency cache."""
+        return f"idempotent:{event_id}"
+
+    async def get_idempotent(self, event_id: str) -> Optional[dict]:
+        """Get cached result for idempotency check (TTL: 24h)."""
+        await self.ensure_connected()
+        try:
+            key = self._idempotent_key(event_id)
+            data = await self.redis.get(key) if self.redis else self.memory_store.get(key)
+            return json.loads(data) if data else None
+        except Exception as e:
+            logger.error("idempotent_get_failed", event_id=event_id, error=str(e))
+            return None
+
+    async def put_idempotent(self, event_id: str, result: dict) -> None:
+        """Cache result for idempotency (TTL: 24h)."""
+        await self.ensure_connected()
+        try:
+            key = self._idempotent_key(event_id)
+            data = json.dumps(result, default=str)
+            if self.redis:
+                await self.redis.setex(key, 86400, data)
+            else:
+                self.memory_store[key] = data
+        except Exception as e:
+            logger.error("idempotent_put_failed", event_id=event_id, error=str(e))
 
 
 # Global store instance

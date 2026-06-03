@@ -1,5 +1,6 @@
 """FastAPI application main entry point."""
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -20,24 +21,20 @@ logger = get_logger(__name__)
 limiter = Limiter(key_func=get_remote_address)
 
 
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     """Application lifespan manager."""
-#     try:
-#         # Startup
-#         logger.info("application_starting", env=settings.app_env)
-        
-#         # Connect to Redis
-#         await redis_store.connect()
-        
-#         yield
-        
-#         # Shutdown
-#         logger.info("application_stopping")
-#         await redis_store.disconnect()
-#     except Exception as e:
-#         logger.error("lifespan_error", error=str(e))
-#         raise
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan manager."""
+    logger.info("application_starting", env=settings.app_env)
+    try:
+        await redis_store.connect()
+    except Exception as e:
+        logger.warning("redis_startup_failed", error=str(e),
+                       message="Falling back to in-memory storage")
+
+    yield
+
+    logger.info("application_stopping")
+    await redis_store.disconnect()
 
 
 # Create FastAPI app
@@ -45,7 +42,7 @@ app = FastAPI(
     title="BOOM Wizard Engine",
     description="Strategic marketing wizard backend",
     version="1.0.0",
-    # lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # Add rate limiter
@@ -55,7 +52,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*", "null"],  # Allow null origin for local file testing
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -88,7 +85,7 @@ async def health_check():
         "status": "healthy",
         "version": "1.0.0",
         "env": settings.app_env,
-        "timestamp": "2026-02-02"
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
 

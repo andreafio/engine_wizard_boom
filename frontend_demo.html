@@ -82,10 +82,10 @@
                 const isConnected = await window.WizardAPI.testServerConnection();
                 if (isConnected) {
                     document.getElementById('connectionTest').innerHTML = 
-                        '<div class="success">✅ Server is reachable at http://localhost:8002</div>';
+                        `<div class="success">✅ Server is reachable at ${window.location.origin}</div>`;
                 } else {
                     document.getElementById('connectionTest').innerHTML = 
-                        '<div class="error">❌ Cannot reach server. Make sure the backend is running on port 8002</div>';
+                        '<div class="error">❌ Cannot reach server. Make sure the backend is available on the same origin.</div>';
                 }
             } catch (error) {
                 document.getElementById('connectionTest').innerHTML = 

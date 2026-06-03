@@ -4,7 +4,7 @@
  */
 
 // Configuration
-const WIZARD_API_BASE = 'http://localhost:8002'; // Updated to match server port
+const WIZARD_API_BASE = window.location.origin; // Use same-origin API base for Vercel
 const TENANT_ID = 'boom'; // From config.py tenant_keys_json
 const API_KEY = 'API_KEY_123'; // From config.py tenant_keys_json
 

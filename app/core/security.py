@@ -35,7 +35,7 @@ def verify_tenant(
         )
     
     expected_key = tenant_keys[x_tenant_id]
-    if x_api_key != expected_key:
+    if not hmac.compare_digest(x_api_key, expected_key):
         logger.warning("invalid_api_key", tenant_id=x_tenant_id)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

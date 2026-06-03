@@ -127,11 +127,24 @@ class OrchestratorServiceV2:
         # 3) Apply user input
         if payload.ui_event:
             # 3a) UI-driven input (preferred)
+            # Resolve ui_type: explicit > question_bank lookup for submitted field > current_q
+            submitted_field = payload.ui_event["field"]
+            ui_type = payload.ui_event.get("ui_type")
+            if not ui_type:
+                for section in self.question_bank.values():
+                    for q in section.questions:
+                        if q.field == submitted_field:
+                            ui_type = q.ui["type"]
+                            break
+                    if ui_type:
+                        break
+            if not ui_type:
+                ui_type = current_q.ui["type"] if current_q else "unknown"
             apply_answer(
                 blueprint=blueprint,
-                field=payload.ui_event["field"],
+                field=submitted_field,
                 value=payload.ui_event["value"],
-                ui_type=payload.ui_event.get("ui_type", current_q.ui["type"] if current_q else "unknown"),
+                ui_type=ui_type,
                 source="user",
                 evidence="",
                 normalizer=self.normalizer,

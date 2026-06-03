@@ -46,3 +46,16 @@ logs/
 # Database
 *.db
 *.sqlite
+
+# Binaries and executables
+*.exe
+*.zip
+*.tar.gz
+
+# Generated outputs
+*.pdf
+research_*.json
+output_*.md
+
+# Virtual environment
+.venv/

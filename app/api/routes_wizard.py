@@ -1,4 +1,5 @@
 """Wizard turn and generation API routes."""
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from app.api.models import (
     WizardTurnRequest, WizardTurnResponse,
@@ -16,12 +17,44 @@ from app.wizard.ui import get_next_required_field, build_assistant_message
 from app.llm.provider import ProviderFactory
 from app.services.generation_service import GenerationService
 from app.services.orchestrator_service import OrchestratorService
+from app.services.orchestrator_service_v2 import OrchestratorServiceV2, TurnInput
+from app.services.field_extractor_service import FieldExtractorService
+from app.services.clarifier_service import ClarifierService
+from app.services.quality_critic_service import QualityCriticService
+from app.services.blueprint_review_service import BlueprintReviewService
+from app.services.strategic_profile_service import StrategicProfileService
+from app.services.input_normalizer_service import InputNormalizerService
+from app.storage.session_store_adapter import RedisSessionStoreAdapter
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/v1/wizard", tags=["wizard"])
 
-# Idempotency cache (in production, use Redis)
-_processed_events = {}
+
+def _build_llm_provider():
+    """Build LLM provider from settings. Returns None if no key configured."""
+    if settings.llm_provider == "openai" and settings.openai_api_key:
+        return ProviderFactory.create("openai", settings.openai_api_key, settings.openai_model)
+    elif settings.llm_provider == "gemini" and settings.gemini_api_key:
+        return ProviderFactory.create("gemini", settings.gemini_api_key, settings.gemini_model)
+    elif settings.llm_provider == "claude" and settings.anthropic_api_key:
+        return ProviderFactory.create("claude", settings.anthropic_api_key, settings.anthropic_model)
+    return None
+
+
+def _build_orchestrator_v2() -> Optional[OrchestratorServiceV2]:
+    """Build OrchestratorServiceV2 if an LLM provider is configured."""
+    llm_provider = _build_llm_provider()
+    if not llm_provider:
+        return None
+    return OrchestratorServiceV2(
+        session_store=RedisSessionStoreAdapter(redis_store),
+        field_extractor_service=FieldExtractorService(llm_provider),
+        clarifier_service=ClarifierService(llm_provider),
+        quality_critic_service=QualityCriticService(llm_provider),
+        blueprint_review_service=BlueprintReviewService(llm_provider),
+        strategic_profile_service=StrategicProfileService(llm_provider),
+        input_normalizer_service=InputNormalizerService(),
+    )
 
 
 @router.post("/turn", response_model=WizardTurnResponse)
@@ -30,22 +63,47 @@ async def wizard_turn(
     tenant_id: str = Depends(verify_tenant)
 ):
     """Process a wizard turn.
-    
+
     Handles user input (via ui_event or user_message), updates state,
     and returns next UI directive.
     """
-    # Check idempotency
-    if request.event_id in _processed_events:
+    # Check idempotency (Redis-backed, survives restarts and multi-instance deploys)
+    cached = await redis_store.get_idempotent(request.event_id)
+    if cached:
         logger.debug("duplicate_event", event_id=request.event_id)
-        return _processed_events[request.event_id]
-    
-    # Get session
+        return WizardTurnResponse(**cached)
+
+    # Get session (needed for tenant check and V1 fallback)
     session = await redis_store.get_session(request.session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
-    
+
     if session.tenant_id != tenant_id:
         raise HTTPException(status_code=403, detail="Access denied")
+
+    # --- V2 path: OrchestratorServiceV2 with intelligent services ---
+    orchestrator_v2 = _build_orchestrator_v2()
+    if orchestrator_v2:
+        try:
+            turn_input = TurnInput(
+                session_id=request.session_id,
+                event_id=request.event_id,
+                ui_event=request.ui_event.model_dump() if request.ui_event else None,
+                user_message=request.user_message,
+                context=request.context or {},
+            )
+            turn_output = await orchestrator_v2.handle_turn(tenant_id, turn_input)
+            response = WizardTurnResponse(
+                assistant_message=turn_output.assistant_message,
+                wizard=turn_output.wizard,
+            )
+            await redis_store.put_idempotent(request.event_id, response.model_dump())
+            logger.info("v2_turn_processed", session_id=request.session_id)
+            return response
+        except Exception as e:
+            logger.warning("v2_turn_failed_fallback_v1",
+                           session_id=request.session_id, error=str(e))
+            # Fall through to V1 path
     
     # Extract field and value from input
     field_name = None
@@ -165,10 +223,10 @@ async def wizard_turn(
         wizard=wizard_state.model_dump()
     )
     
-    # Cache for idempotency
-    _processed_events[request.event_id] = response
-    
-    logger.info("turn_processed", 
+    # Cache for idempotency (Redis-backed)
+    await redis_store.put_idempotent(request.event_id, response.model_dump())
+
+    logger.info("turn_processed",
                 session_id=request.session_id,
                 field=field_name,
                 step=session.current_step)
@@ -257,17 +315,31 @@ async def generate(
         logger.error("llm_init_failed", error=str(e))
         raise HTTPException(status_code=500, detail="Failed to initialize LLM")
     
-    # Generate output
+    # Generate output (slides + report)
     generation_service = GenerationService(llm_provider)
     try:
         output = await generation_service.generate_output(session, request.format)
-        
         logger.info("generation_completed", session_id=request.session_id)
-        
-        return GenerateResponse(
-            presentation=output.get("presentation", {}),
-            report=output.get("report", {})
-        )
     except Exception as e:
         logger.error("generation_failed", session_id=request.session_id, error=str(e))
         raise HTTPException(status_code=500, detail="Generation failed")
+
+    # Generate strategic profile V2 (consulting-grade) — non-blocking
+    internal_profile = None
+    orchestrator_v2 = _build_orchestrator_v2()
+    if orchestrator_v2:
+        try:
+            internal_profile = await orchestrator_v2.handle_generate_internal(
+                tenant_id=tenant_id,
+                session_id=request.session_id,
+                event_id=f"{request.event_id}_profile",
+            )
+            logger.info("internal_profile_generated", session_id=request.session_id)
+        except Exception as e:
+            logger.warning("internal_profile_failed", session_id=request.session_id, error=str(e))
+
+    return GenerateResponse(
+        presentation=output.get("presentation", {}),
+        report=output.get("report", {}),
+        internal_profile=internal_profile,
+    )

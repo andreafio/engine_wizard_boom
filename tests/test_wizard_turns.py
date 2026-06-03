@@ -1,13 +1,13 @@
 """Test wizard turns."""
 import pytest
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 from app.main import app
 
 
 @pytest.mark.asyncio
 async def test_wizard_turn_with_ui_event():
     """Test wizard turn with UI event."""
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         # Start session
         start_response = await client.post(
             "/v1/sessions/start",
@@ -46,7 +46,7 @@ async def test_wizard_turn_with_ui_event():
 @pytest.mark.asyncio
 async def test_wizard_idempotency():
     """Test idempotency of wizard turns."""
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         # Start session
         start_response = await client.post(
             "/v1/sessions/start",
