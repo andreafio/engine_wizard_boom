@@ -23,4 +23,10 @@ services:
       - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
       - TENANT_KEYS_JSON=${TENANT_KEYS_JSON}
       - HMAC_SECRET=${HMAC_SECRET}
+    networks:
+      - coolify
     restart: unless-stopped
+
+networks:
+  coolify:
+    external: true
