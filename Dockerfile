@@ -15,6 +15,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application
 COPY app/ ./app/
+COPY question_bank_v1.json .
 
 # Expose port
 EXPOSE 8000
