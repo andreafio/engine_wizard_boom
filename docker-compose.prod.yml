@@ -1,31 +1,20 @@
 version: '3.8'
 
-# Dev locale: Redis gira in Docker
-# Prod: usa docker-compose.prod.yml (Redis sul host)
+# Prod: Redis è sul host (condiviso tra tutte le app)
+# Avvio: docker compose -f docker-compose.prod.yml up -d
 
 services:
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
   wizard_engine:
     build: .
     ports:
       - "8000:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       - APP_ENV=prod
       - PORT=8000
       - LOG_LEVEL=INFO
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_URL=redis://host.docker.internal:6379/0
       - DATABASE_URL=${DATABASE_URL}
       - LLM_PROVIDER=${LLM_PROVIDER:-openai}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
@@ -34,10 +23,4 @@ services:
       - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
       - TENANT_KEYS_JSON=${TENANT_KEYS_JSON}
       - HMAC_SECRET=${HMAC_SECRET}
-    depends_on:
-      redis:
-        condition: service_healthy
     restart: unless-stopped
-
-volumes:
-  redis_data:
