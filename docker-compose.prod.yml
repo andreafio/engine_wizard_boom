@@ -14,7 +14,7 @@ services:
       - APP_ENV=prod
       - PORT=8000
       - LOG_LEVEL=INFO
-      - REDIS_URL=redis://host.docker.internal:6379/0
+      - REDIS_URL=${REDIS_URL:-redis://host.docker.internal:6379/0}
       - DATABASE_URL=${DATABASE_URL}
       - LLM_PROVIDER=${LLM_PROVIDER:-openai}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
