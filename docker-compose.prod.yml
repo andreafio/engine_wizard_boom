@@ -7,12 +7,12 @@ services:
   wizard_engine:
     build: .
     ports:
-      - "${APP_PORT:-8001}:8000"
+      - "${APP_PORT:-8001}:8001"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
       - APP_ENV=${APP_ENV:-prod}
-      - PORT=8000
+      - PORT=${APP_PORT:-8001}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - REDIS_URL=${REDIS_URL:-redis://host.docker.internal:6379/0}
       - DATABASE_URL=${DATABASE_URL}
