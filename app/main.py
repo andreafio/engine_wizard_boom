@@ -8,10 +8,12 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
+from sqlalchemy import text
+
 from app.core.config import settings
 from app.core.logging import configure_logging, get_logger
 from app.storage.redis_store import redis_store
-from app.db.database import init_db
+from app.db.database import init_db, get_engine
 from app.api import routes_sessions, routes_wizard
 
 # Configure logging
@@ -82,13 +84,43 @@ async def global_exception_handler(request: Request, exc: Exception):
 # Health check
 @app.get("/health")
 async def health_check():
-    """Health check endpoint."""
-    return {
-        "status": "healthy",
-        "version": "1.0.0",
-        "env": settings.app_env,
-        "timestamp": datetime.now(timezone.utc).isoformat()
-    }
+    checks = {}
+    overall = "healthy"
+
+    # Redis
+    if redis_store.redis is not None:
+        try:
+            await redis_store.redis.ping()
+            checks["redis"] = {"status": "ok", "mode": "redis"}
+        except Exception as e:
+            checks["redis"] = {"status": "error", "error": str(e)}
+            overall = "unhealthy"
+    else:
+        checks["redis"] = {"status": "ok", "mode": "memory"}
+
+    # Database
+    engine = get_engine()
+    if engine is not None:
+        try:
+            async with engine.connect() as conn:
+                await conn.execute(text("SELECT 1"))
+            checks["db"] = {"status": "ok"}
+        except Exception as e:
+            checks["db"] = {"status": "error", "error": str(e)}
+            overall = "unhealthy"
+    else:
+        checks["db"] = {"status": "disabled"}
+
+    return JSONResponse(
+        status_code=status.HTTP_200_OK if overall == "healthy" else status.HTTP_503_SERVICE_UNAVAILABLE,
+        content={
+            "status": overall,
+            "version": "1.0.0",
+            "env": settings.app_env,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "checks": checks,
+        }
+    )
 
 
 @app.get("/")
