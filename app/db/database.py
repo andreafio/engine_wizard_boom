@@ -16,11 +16,20 @@ _engine = None
 _session_factory = None
 
 
+def _normalize_db_url(url: str) -> str:
+    """Converte postgres:// e postgresql:// nel formato richiesto da asyncpg."""
+    if url.startswith("postgres://"):
+        return url.replace("postgres://", "postgresql+asyncpg://", 1)
+    if url.startswith("postgresql://") and "+asyncpg" not in url:
+        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    return url
+
+
 def get_engine():
     global _engine
     if _engine is None and settings.database_url:
         _engine = create_async_engine(
-            settings.database_url,
+            _normalize_db_url(settings.database_url),
             echo=False,
             pool_pre_ping=True,
         )

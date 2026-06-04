@@ -33,6 +33,7 @@ class RedisStore:
                 await self.redis.ping()
                 logger.info("redis_connected", url=settings.redis_url)
             except Exception as e:
+                self.redis = None  # fallback in-memory
                 logger.error("redis_connection_failed", error=str(e))
                 raise
     
